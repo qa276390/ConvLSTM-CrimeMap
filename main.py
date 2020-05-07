@@ -246,7 +246,7 @@ def test():
     TIMESTAMP = "2020-03-09T00-00-00"
     save_dir = './save_model/' + TIMESTAMP
     encoder = Encoder(encoder_params[0], encoder_params[1]).cuda()
-    decoder = Decoder(decoder_params[0], decoder_params[1]).cuda()
+    decoder = Decoder(decoder_params[0], decoder_params[1], args.frames_output).cuda()
     net = ED(encoder, decoder)
     #run_dir = './runs/' + TIMESTAMP
     #if not os.path.isdir(run_dir):
