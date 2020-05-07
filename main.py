@@ -28,6 +28,7 @@ import numpy as np
 from tensorboardX import SummaryWriter
 import argparse
 from datetime import datetime
+import json
 
 
 parser = argparse.ArgumentParser()
@@ -106,12 +107,25 @@ def train():
     '''
     main function to run the training
     '''
+    restore = False
     #TIMESTAMP = "2020-03-09T00-00-00"
     if args.timestamp == "NA":
         TIMESTAMP = datetime.now().strftime("%b%d-%H%M%S")
     else:
+        # restore
+        restore = True
         TIMESTAMP = args.timestamp
     save_dir = './save_model/' + args.timestamp
+    
+    if restore:
+        # restore args
+        with open(os.path.join(save_dir, 'cmd_args.txt'), 'r') as f:
+            args.__dict__ = json.load(f)
+    else:
+        # save args
+        with open(os.path.join(save_dir, 'cmd_args.txt'), 'w') as f:
+            json.dump(args.__dict__, f, indent = 2)
+
     encoder = Encoder(encoder_params[0], encoder_params[1]).cuda()
     decoder = Decoder(decoder_params[0], decoder_params[1], args.frames_output).cuda()
     net = ED(encoder, decoder)
@@ -243,8 +257,17 @@ def test():
     main function to run the training
     '''
     #TIMESTAMP = args.timestamp
-    TIMESTAMP = "2020-03-09T00-00-00"
+    # restore args
+
+    CHECKPOINT = args.checkpoint    
+    TIMESTAMP = args.timestamp
     save_dir = './save_model/' + TIMESTAMP
+
+    args_path = os.path.join(save_dir, 'cmd_args.txt')
+    if os.path.exists(args_path):
+        with open(args_path, 'r') as f:
+            args.__dict__ = json.load(f)
+            args.is_train = False
     encoder = Encoder(encoder_params[0], encoder_params[1]).cuda()
     decoder = Decoder(decoder_params[0], decoder_params[1], args.frames_output).cuda()
     net = ED(encoder, decoder)
@@ -263,12 +286,11 @@ def test():
     if os.path.exists(save_dir):
         # load existing model
         print('==> loading existing model')
-        model_info = torch.load(args.checkpoint)
+        model_info = torch.load(CHECKPOINT)
         net.load_state_dict(model_info['state_dict'])
         optimizer = torch.optim.Adam(net.parameters())
         optimizer.load_state_dict(model_info['optimizer'])
     else:
-        print(os.path.join(save_dir, 'checkpoint.pth.tar'))
         print('there is no such checkpoin')
         exit()
     lossfunction = nn.MSELoss().cuda()
