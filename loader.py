@@ -48,7 +48,7 @@ class MovingMNIST(data.Dataset):
             self.dataset = load_mnist(root, mode)
             self.length =  len(self.dataset) - (n_frames_input + n_frames_output)
         else:
-            self.dataset = load_fixed_set(root, False)
+            self.dataset = load_test_set(root)
             self.length =  len(self.dataset) - (n_frames_input + n_frames_output)
 
 
@@ -72,6 +72,7 @@ class MovingMNIST(data.Dataset):
         if self.is_train:
             images = self.dataset[idx:idx+length,:,:]
         else:
+            length = self.n_frames_input
             images = self.dataset[idx:idx+self.n_frames_input,:,:]
 
         # if self.transform is not None:
@@ -87,7 +88,7 @@ class MovingMNIST(data.Dataset):
         if self.is_train:
             output = images[self.n_frames_input:length]
         else:
-            output = []
+            output = np.array([])
 
         frozen = input[-1]
         # add a wall to input data
