@@ -15,10 +15,10 @@ import torch
 
 
 class Decoder(nn.Module):
-    def __init__(self, subnets, rnns):
+    def __init__(self, subnets, rnns, seq_length):
         super().__init__()
         assert len(subnets) == len(rnns)
-
+        self.seq_length = seq_length
         self.blocks = len(subnets)
 
         for index, (params, rnn) in enumerate(zip(subnets, rnns)):
@@ -27,7 +27,7 @@ class Decoder(nn.Module):
                     make_layers(params))
 
     def forward_by_stage(self, inputs, state, subnet, rnn):
-        inputs, state_stage = rnn(inputs, state, seq_len=10)
+        inputs, state_stage = rnn(inputs, state, seq_len=self.seq_length)
         seq_number, batch_size, input_channel, height, width = inputs.size()
         inputs = torch.reshape(inputs, (-1, input_channel, height, width))
         inputs = subnet(inputs)
@@ -59,7 +59,7 @@ if __name__ == "__main__":
     encoder = Encoder(convlstm_encoder_params[0],
                       convlstm_encoder_params[1]).cuda()
     decoder = Decoder(convlstm_forecaster_params[0],
-                      convlstm_forecaster_params[1]).cuda()
+                      convlstm_forecaster_params[1], 10).cuda()
     if torch.cuda.device_count() > 1:
         encoder = nn.DataParallel(encoder)
         decoder = nn.DataParallel(decoder)

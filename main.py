@@ -27,6 +27,7 @@ from tqdm import tqdm
 import numpy as np
 from tensorboardX import SummaryWriter
 import argparse
+from datetime import datetime
 
 
 parser = argparse.ArgumentParser()
@@ -106,17 +107,20 @@ def train():
     main function to run the training
     '''
     #TIMESTAMP = "2020-03-09T00-00-00"
-    TIMESTAMP = args.timestamp
+    if args.timestamp == "NA":
+        TIMESTAMP = datetime.now().strftime("%b%d-%H%M%S")
+    else:
+        TIMESTAMP = args.timestamp
     save_dir = './save_model/' + args.timestamp
     encoder = Encoder(encoder_params[0], encoder_params[1]).cuda()
-    decoder = Decoder(decoder_params[0], decoder_params[1]).cuda()
+    decoder = Decoder(decoder_params[0], decoder_params[1], args.frames_output).cuda()
     net = ED(encoder, decoder)
     run_dir = './runs/' + TIMESTAMP
     if not os.path.isdir(run_dir):
         os.makedirs(run_dir)
     tb = SummaryWriter(run_dir)
     # initialize the early_stopping object
-    early_stopping = EarlyStopping(patience=20, verbose=True)
+    early_stopping = EarlyStopping(patience=30, verbose=True)
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
     if torch.cuda.device_count() > 1:
@@ -157,6 +161,7 @@ def train():
         ###################
         t = tqdm(trainLoader, leave=False, total=len(trainLoader))
         for i, (idx, targetVar, inputVar, _, _) in enumerate(t):
+            
             inputs = inputVar.to(device)  # B,S,C,H,W
             label = targetVar.to(device)  # B,S,C,H,W
             optimizer.zero_grad()

@@ -76,7 +76,7 @@ class MovingMNIST(data.Dataset):
         r = 1
         w = int(self.image_size / r)
         images  = images[:, :, :, np.newaxis]
-        print(images.shape)
+        #print(images.shape)
         images = images.reshape((length, w, r, w, r)).transpose(0, 2, 4, 1, 3).reshape((length, r * r, w, w))
 
         input = images[:self.n_frames_input]

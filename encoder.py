@@ -49,14 +49,15 @@ class Encoder(nn.Module):
 
 if __name__ == "__main__":
     from net_params import convgru_encoder_params, convgru_decoder_params
-    from data.mm import MovingMNIST
+    #from data.mm import MovingMNIST
+    from loader import MovingMNIST
 
     encoder = Encoder(convgru_encoder_params[0],
                       convgru_encoder_params[1]).cuda()
     trainFolder = MovingMNIST(is_train=True,
-                              root='data/',
-                              n_frames_input=10,
-                              n_frames_output=10,
+                              root='../data/npy-064',
+                              n_frames_input=12,
+                              n_frames_output=12,
                               num_objects=[3])
     trainLoader = torch.utils.data.DataLoader(
         trainFolder,
@@ -64,6 +65,9 @@ if __name__ == "__main__":
         shuffle=False,
     )
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    #print('in training...')
     for i, (idx, targetVar, inputVar, _, _) in enumerate(trainLoader):
+        #print(targetVar.shape)
+        #print(inputVar.shape)
         inputs = inputVar.to(device)  # B,S,1,64,64
         state = encoder(inputs)
