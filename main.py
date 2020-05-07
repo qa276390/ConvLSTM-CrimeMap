@@ -76,11 +76,13 @@ torch.backends.cudnn.benchmark = False
 
 trainFolder = MovingMNIST(is_train=True,
                           root='../data/npy-064/',
+                          mode = 'train',
                           n_frames_input=args.frames_input,
                           n_frames_output=args.frames_output,
                           num_objects=[3])
-validFolder = MovingMNIST(is_train=False,
+validFolder = MovingMNIST(is_train=True,
                           root='../data/npy-064/',
+                          mode = 'valid', 
                           n_frames_input=args.frames_input,
                           n_frames_output=args.frames_output,
                           num_objects=[3])
@@ -111,20 +113,18 @@ def train():
     #TIMESTAMP = "2020-03-09T00-00-00"
     if args.timestamp == "NA":
         TIMESTAMP = datetime.now().strftime("%b%d-%H%M%S")
+        print('TIMESTAMP', TIMESTAMP)
     else:
         # restore
         restore = True
         TIMESTAMP = args.timestamp
-    save_dir = './save_model/' + args.timestamp
+    save_dir = './save_model/' + TIMESTAMP
     
     if restore:
         # restore args
         with open(os.path.join(save_dir, 'cmd_args.txt'), 'r') as f:
             args.__dict__ = json.load(f)
-    else:
-        # save args
-        with open(os.path.join(save_dir, 'cmd_args.txt'), 'w') as f:
-            json.dump(args.__dict__, f, indent = 2)
+
 
     encoder = Encoder(encoder_params[0], encoder_params[1]).cuda()
     decoder = Decoder(decoder_params[0], decoder_params[1], args.frames_output).cuda()
@@ -251,6 +251,11 @@ def train():
     with open("avg_valid_losses.txt", 'wt') as f:
         for i in avg_valid_losses:
             print(i, file=f)
+    
+    # save args
+    if not restore:
+        with open(os.path.join(save_dir, 'cmd_args.txt'), 'w+') as f:
+            json.dump(args.__dict__, f, indent = 2)
 
 def test():
     '''

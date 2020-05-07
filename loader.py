@@ -7,7 +7,7 @@ import random
 import torch
 import torch.utils.data as data
 
-def load_mnist(root):
+def load_mnist(root, mode):
     # Load MNIST dataset for generating training data.
     """
     path = os.path.join(root, 'train-images-idx3-ubyte.gz')
@@ -16,10 +16,14 @@ def load_mnist(root):
         mnist = mnist.reshape(-1, 28, 28)
     return mnist
     """
-    path = os.path.join(root, 'trainset.npy')
+    if mode=='train':
+        path = os.path.join(root, 'trainset.npy')
+    else:
+        path = os.path.join(root, 'validset.npy')
+
     return np.load(path)
 
-def load_fixed_set(root, is_train):
+def load_test_set(root):
     # Load the fixed dataset
     """
     filename = 'mnist_test_seq.npy'
@@ -32,7 +36,7 @@ def load_fixed_set(root, is_train):
     return np.load(path)
 
 class MovingMNIST(data.Dataset):
-    def __init__(self, root, is_train, n_frames_input, n_frames_output, num_objects,
+    def __init__(self, root, mode, is_train, n_frames_input, n_frames_output, num_objects,
                  transform=None):
         '''
         param num_objects: a list of number of possible objects.
@@ -41,8 +45,8 @@ class MovingMNIST(data.Dataset):
 
         self.dataset = None
         if is_train:
-            self.mnist = load_mnist(root)
-            self.length =  len(self.mnist) - (n_frames_input + n_frames_output)
+            self.dataset = load_mnist(root, mode)
+            self.length =  len(self.dataset) - (n_frames_input + n_frames_output)
         else:
             self.dataset = load_fixed_set(root, False)
             self.length =  len(self.dataset) - (n_frames_input + n_frames_output)
@@ -66,9 +70,9 @@ class MovingMNIST(data.Dataset):
     def __getitem__(self, idx):
         length = self.n_frames_input + self.n_frames_output
         if self.is_train:
-            images = self.mnist[idx:idx+length,:,:]
-        else:
             images = self.dataset[idx:idx+length,:,:]
+        else:
+            images = self.dataset[idx:idx+self.n_frames_input,:,:]
 
         # if self.transform is not None:
         #     images = self.transform(images)
@@ -80,7 +84,7 @@ class MovingMNIST(data.Dataset):
         images = images.reshape((length, w, r, w, r)).transpose(0, 2, 4, 1, 3).reshape((length, r * r, w, w))
 
         input = images[:self.n_frames_input]
-        if self.n_frames_output > 0:
+        if self.is_train:
             output = images[self.n_frames_input:length]
         else:
             output = []
