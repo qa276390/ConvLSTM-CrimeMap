@@ -68,27 +68,31 @@ class MovingMNIST(data.Dataset):
 
 
     def __getitem__(self, idx):
-        length = self.n_frames_input + self.n_frames_output
+        #length = self.n_frames_input + self.n_frames_output
+        length = self.n_frames_input
         if self.is_train:
-            images = self.dataset[idx:idx+length,:,:]
+            images_input = self.dataset[idx:idx+self.n_frames_input,:,:]
+            images_output = self.dataset[idx+1:idx+1+self.n_frames_input,:,:]
         else:
-            length = self.n_frames_input
-            images = self.dataset[idx:idx+self.n_frames_input,:,:]
+            images_input = self.dataset[idx:idx+self.n_frames_input,:,:]
 
-        # if self.transform is not None:
-        #     images = self.transform(images)
 
         r = 1
         w = int(self.image_size / r)
-        images  = images[:, :, :, np.newaxis]
-        #print(images.shape)
-        images = images.reshape((length, w, r, w, r)).transpose(0, 2, 4, 1, 3).reshape((length, r * r, w, w))
 
-        input = images[:self.n_frames_input]
+        # output (label)
         if self.is_train:
-            output = images[self.n_frames_input:length]
-        else:
+            images_output  = images_output[:, :, :, np.newaxis]
+            images_output = images_output.reshape((length, w, r, w, r)).transpose(0, 2, 4, 1, 3).reshape((length, r * r, w, w))
+            output = images_output
+        else: 
             output = np.array([])
+        
+        # input (x)
+        images_input  = images_input[:, :, :, np.newaxis]
+        images_input = images_input.reshape((length, w, r, w, r)).transpose(0, 2, 4, 1, 3).reshape((length, r * r, w, w))
+        input = images_input
+
 
         frozen = input[-1]
         # add a wall to input data
